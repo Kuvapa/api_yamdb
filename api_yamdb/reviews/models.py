@@ -1,11 +1,9 @@
 """Review app models."""
-# Users, Titles, Categories, Genres, Review и Comments. 
-from django.contrib.auth.models import AbstractUser
+# Titles, Categories, Genres, Review и Comments. 
 from django.db import models
 
+from user.models import User
 
-class User(AbstractUser):
-    pass
 
 class Titles(models.Model):
     pass
