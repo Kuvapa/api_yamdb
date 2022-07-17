@@ -37,3 +37,9 @@ class User(AbstractUser):
         choices=ROLE_CHOICES,
         default='user'
     )
+
+    class Meta:
+        ordering = ('id',)
+
+    def __str__(self):
+        return self.username
