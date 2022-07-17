@@ -1,7 +1,15 @@
 from rest_framework import serializers
 from django.db.models import Avg
 
-from reviews.models import Categories, Genres, GenresTitles, Titles
+from reviews.models import (
+    Categories,
+    Genres,
+    GenresTitles,
+    Titles,
+    Comments,
+    Review
+    )
+from .validators import UniqueValueValidator
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -60,3 +68,41 @@ class TitlesReadSerializer(serializers.ModelSerializer):
         if isinstance(rating, int):
             return round(rating)
         return rating
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """Serializer for reviews."""
+
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username',
+    )
+
+    class Meta:
+        """Meta for ReviewSerializer."""
+
+        model = Review
+        fields = '__all__'
+        read_only_fields = ('title',)
+        validators = [
+            UniqueValueValidator('title')
+        ]
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for commentss."""
+
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username',
+    )
+
+    class Meta:
+        """Meta for CommentSerializer."""
+
+        model = Comments
+        fields = '__all__'
+        read_only_fields = ('review',)
+        validators = [
+            UniqueValueValidator('review')
+        ]
+

@@ -1,5 +1,6 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+from users.models import User
 
 
 class Categories(models.Model):
@@ -89,7 +90,6 @@ class GenresTitles(models.Model):
 
 
 class Review(models.Model):
-    # id,title_id,text,author,score,pub_date
     title = models.ForeignKey(
         Titles,
         verbose_name=("Произведения"),
@@ -106,9 +106,7 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         related_name="reviews", 
     )
-    REVIEW_CHOICES = [
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-    ]
+    REVIEW_CHOICES = [(i,i) for i in range(1, 11)]
     score = models.CharField(
         max_length=2,
         choices=REVIEW_CHOICES,
@@ -118,7 +116,6 @@ class Review(models.Model):
 
 
 class Comments(models.Model):
-    # id,review_id,text,author,pub_date
     review = models.ForeignKey(
         Review,
         verbose_name=("Отзыв"),
