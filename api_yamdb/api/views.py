@@ -28,7 +28,7 @@ from .validators import email_validator, yamdb_user_validator
 User = get_user_model()
 
 
-class UsersViewSet(viewsets.ModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     """API пользователя."""
 
     queryset = User.objects.all()
