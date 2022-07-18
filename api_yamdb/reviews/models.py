@@ -104,9 +104,9 @@ class Review(models.Model):
         User,
         verbose_name=("Автор отзыва"),
         on_delete=models.CASCADE,
-        related_name="reviews", 
+        related_name="reviews",
     )
-    REVIEW_CHOICES = [(i,i) for i in range(1, 11)]
+    REVIEW_CHOICES = [(i, i) for i in range(1, 11)]
     score = models.CharField(
         max_length=2,
         choices=REVIEW_CHOICES,
@@ -120,7 +120,7 @@ class Comments(models.Model):
         Review,
         verbose_name=("Отзыв"),
         on_delete=models.CASCADE,
-        related_name="comments")    
+        related_name="comments")
     text = models.TextField(
         verbose_name="Текст комментария",
         help_text="Напишите здесь текст нового комментария")
@@ -128,6 +128,6 @@ class Comments(models.Model):
         User,
         verbose_name=("Автор комментария"),
         on_delete=models.CASCADE,
-        related_name="comments", 
+        related_name="comments",
     )
     pub_date = models.DateTimeField(auto_now_add=True)

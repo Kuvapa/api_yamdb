@@ -9,6 +9,7 @@ from rest_framework.decorators import action, api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 
 from reviews.models import Categories, Genres, Titles, Review
 from .serializers import (
@@ -21,14 +22,17 @@ from .serializers import (
     UserSerializer,
     UserReadOnlySerializer
 )
-from .permissions import AdminOnlyPermission, AdminOrReadOnlyPermission
+from .permissions import (
+    AdminOnlyPermission,
+    AdminOrReadOnlyPermission,
+)
 from .validators import email_validator, yamdb_user_validator
 
 
 User = get_user_model()
 
 
-class UsersViewSet(viewsets.ModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     """API пользователя."""
 
     queryset = User.objects.all()
@@ -111,6 +115,10 @@ class CategoryViewSet(mixins.CreateModelMixin,
     queryset = Categories.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (AdminOrReadOnlyPermission, )
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
+    filterset_fields = ('name', )
+    search_fields = ('=name',)
+    lookup_field = 'slug'
 
 
 class GenreViewSet(mixins.CreateModelMixin,
@@ -120,15 +128,21 @@ class GenreViewSet(mixins.CreateModelMixin,
     queryset = Genres.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (AdminOrReadOnlyPermission, )
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
+    filterset_fields = ('name', )
+    search_fields = ('=name',)
+    lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all()
-    serializer_class = TitleSerializer
     permission_classes = (AdminOrReadOnlyPermission, )
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
+    filterset_fields = ('name', )
+    search_fields = ('=name',)
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action in ['list', 'retrieve']:
             return TitlesReadSerializer
         else:
             return TitleSerializer
