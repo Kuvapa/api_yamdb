@@ -64,7 +64,7 @@ class TitleSerializer(serializers.ModelSerializer):
     categories = serializers.SlugRelatedField(
         many=True,
         read_only=True,
-        slug_field='name',
+        slug_field='slug',
     )
     genres = GenreSerializer(
         many=True,
@@ -73,7 +73,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Titles
-        fields = ('__all__')
+        fields = '__all__'
 
     def create(self, validated_data):
         if 'genres' not in self.initial_data:
@@ -96,8 +96,8 @@ class TitlesReadSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
 
     class Meta:
-        fields = '__all__'
         model = Titles
+        fields = '__all__'
 
     def get_rating(self, obj):
         rating = obj.reviews.aggregate(Avg('score'))['score__avg']
