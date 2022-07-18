@@ -48,10 +48,9 @@ class Titles(models.Model):
         help_text='Укажите название произведения'
     )
 
-    year = models.DateTimeField(
+    year = models.IntegerField(
         verbose_name='Год выпуска',
-        help_text='Укажите год выпуска',
-        auto_now_add=True
+        help_text='Укажите год выпуска'
     )
 
     description = models.TextField(

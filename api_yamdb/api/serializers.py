@@ -60,41 +60,31 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
+
+
+class SlugObjectRelatedName(serializers.SlugRelatedField):
+    def __init__(self, read_serializer_cls, **kwargs):
+        super().__init__(**kwargs)
+        self.read_serializer_cls = read_serializer_cls
+
+    def to_representation(self, obj):
+        return self.read_serializer_cls(obj).data
+
+
 class TitleSerializer(serializers.ModelSerializer):
-    categories = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
+    category = SlugObjectRelatedName(
+        read_serializer_cls=CategorySerializer,
         slug_field='slug',
+        queryset=Categories.objects.all(),
     )
-    genres = GenreSerializer(
-        many=True,
+    genre = SlugObjectRelatedName(
+        read_serializer_cls=GenreSerializer,
+        slug_field='slug',
+        read_only=True,
         required=False,
+        many=True,
     )
-
-    class Meta:
-        model = Titles
-        fields = '__all__'
-
-    def create(self, validated_data):
-        if 'genres' not in self.initial_data:
-            title = Titles.objects.create(**validated_data)
-            return title
-        else:
-            genres = validated_data.pop('genres')
-            title = Titles.objects.create(**validated_data)
-            for genre in genres:
-                current_genre, status = Genres.objects.get_or_create(
-                    **genre)
-                GenresTitles.objects.create(
-                    genres=current_genre, titles=title)
-            return title
-
-
-class TitlesReadSerializer(serializers.ModelSerializer):
-    genres = GenreSerializer(read_only=True, many=True)
-    categories = CategorySerializer(read_only=True)
     rating = serializers.SerializerMethodField()
-
     class Meta:
         model = Titles
         fields = '__all__'
@@ -104,6 +94,16 @@ class TitlesReadSerializer(serializers.ModelSerializer):
         if isinstance(rating, int):
             return round(rating)
         return rating
+
+    def create(self, validated_data):
+        title = Titles.objects.create(**validated_data)
+        if 'genre' in self.initial_data:
+            genres = self.initial_data.getlist('genre')
+            for genre in genres:
+                current_genre, _ = Genres.objects.get_or_create(slug=genre)
+                title.genre.add(current_genre)
+        return title
+
 
 
 class ReviewSerializer(serializers.ModelSerializer):
