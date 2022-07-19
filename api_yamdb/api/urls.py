@@ -23,7 +23,7 @@ v1_router.register(
     r'titles/(?P<title_id>\d+)/reviews/(?P<reviews_id>\d+)/comments/',
     CommentViewSet, basename='comments'
 )
-v1_router.register('users', UserViewSet)
+v1_router.register('users', UserViewSet, basename='users')
 app_name = 'api'
 urlpatterns = [
     path('v1/auth/signup/', send_confirmation_code),

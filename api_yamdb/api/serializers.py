@@ -142,3 +142,15 @@ class CommentSerializer(serializers.ModelSerializer):
         validators = [
             UniqueValueValidator('review')
         ]
+
+
+class SignUpSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ('email', 'username')
+
+
+class ConfirmationCodeSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
