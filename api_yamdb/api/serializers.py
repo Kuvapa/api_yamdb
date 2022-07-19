@@ -8,7 +8,6 @@ from users.models import User
 from reviews.models import (
     Categories,
     Genres,
-    GenresTitles,
     Titles,
     Comments,
     Review
@@ -72,18 +71,30 @@ class SlugObjectRelatedName(serializers.SlugRelatedField):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    category = SlugObjectRelatedName(
-        read_serializer_cls=CategorySerializer,
-        slug_field='slug',
-        queryset=Categories.objects.all(),
+    genre = serializers.SlugRelatedField(
+        slug_field='slug', many=True, queryset=Genres.objects.all()
     )
-    genre = SlugObjectRelatedName(
-        read_serializer_cls=GenreSerializer,
-        slug_field='slug',
-        read_only=True,
-        required=False,
-        many=True,
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Categories.objects.all()
     )
+
+    class Meta:
+        model = Titles
+        fields = '__all__'
+
+    def create(self, validated_data):
+        if 'genre' not in self.initial_data:
+            title = Titles.objects.create(**validated_data)
+            return title
+        genre = validated_data.pop('genre')
+        title = Titles.objects.create(**validated_data)
+        title.genre.set(genre)
+        return title
+
+
+class TitlesReadSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(read_only=True, many=True)
+    category = CategorySerializer(read_only=True)
     rating = serializers.SerializerMethodField()
     class Meta:
         model = Titles

@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from reviews.models import Categories, Genres, Titles, Review
+from .filters import TitlesFilter
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -136,22 +137,14 @@ class GenreViewSet(mixins.CreateModelMixin,
 class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (AdminOrReadOnlyPermission, )
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
-    filterset_fields = ('year',)
-    search_fields = ('^name',)
-    serializer_class = TitleSerializer
+    filterset_class = TitlesFilter
+    search_fields = ('=name',)
 
-    def get_queryset(self):
-        query = Titles.objects.all()
-        genre = self.request.query_params.get('genre')
-        if genre is not None:
-            query = query.filter(genre__slug=genre)
-        category = self.request.query_params.get('category')
-        if category is not None:
-            query = query.filter(category__slug=category)
-        name = self.request.query_params.get('name')
-        if name is not None:
-            query = query.filter(name__startswith=name)
-        return query
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return TitlesReadSerializer
+        return TitleSerializer
+
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
