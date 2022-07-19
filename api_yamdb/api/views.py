@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from reviews.models import Categories, Genres, Titles, Review
+from .filters import TitlesFilter
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -138,14 +139,13 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all()
     permission_classes = (AdminOrReadOnlyPermission, )
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
-    filterset_fields = ('name', )
+    filterset_class = TitlesFilter
     search_fields = ('=name',)
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return TitlesReadSerializer
-        else:
-            return TitleSerializer
+        return TitleSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
