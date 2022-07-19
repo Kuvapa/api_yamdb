@@ -8,7 +8,6 @@ from users.models import User
 from reviews.models import (
     Categories,
     Genres,
-    GenresTitles,
     Titles,
     Comments,
     Review
@@ -61,14 +60,11 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    categories = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
-        slug_field='slug',
+    genre = serializers.SlugRelatedField(
+        slug_field='slug', many=True, queryset=Genres.objects.all()
     )
-    genres = GenreSerializer(
-        many=True,
-        required=False,
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Categories.objects.all()
     )
 
     class Meta:
@@ -76,23 +72,18 @@ class TitleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        if 'genres' not in self.initial_data:
+        if 'genre' not in self.initial_data:
             title = Titles.objects.create(**validated_data)
             return title
-        else:
-            genres = validated_data.pop('genres')
-            title = Titles.objects.create(**validated_data)
-            for genre in genres:
-                current_genre, status = Genres.objects.get_or_create(
-                    **genre)
-                GenresTitles.objects.create(
-                    genres=current_genre, titles=title)
-            return title
+        genre = validated_data.pop('genre')
+        title = Titles.objects.create(**validated_data)
+        title.genre.set(genre)
+        return title
 
 
 class TitlesReadSerializer(serializers.ModelSerializer):
-    genres = GenreSerializer(read_only=True, many=True)
-    categories = CategorySerializer(read_only=True)
+    genre = GenreSerializer(read_only=True, many=True)
+    category = CategorySerializer(read_only=True)
     rating = serializers.SerializerMethodField()
 
     class Meta:
