@@ -16,6 +16,7 @@ from .filters import TitlesFilter
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
+    TitlesReadSerializer,
     TitleSerializer,
     ReviewSerializer,
     CommentSerializer,
@@ -135,6 +136,7 @@ class GenreViewSet(mixins.CreateModelMixin,
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Titles.objects.all()
     permission_classes = (AdminOrReadOnlyPermission, )
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
     filterset_class = TitlesFilter
