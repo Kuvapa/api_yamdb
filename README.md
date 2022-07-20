@@ -1,3 +1,3 @@
 # api_yamdb
 api_yamdb
-sdfsdf
+Мы скоро это доделаем.
