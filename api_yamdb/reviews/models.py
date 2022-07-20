@@ -142,6 +142,7 @@ class Review(models.Model):
     class Meta:
         """Meta for Review model."""
 
+        ordering = ['pub_date']
         constraints = [
             UniqueConstraint(fields=["author", "title"],
                              name="unique_relationships"),
@@ -166,3 +167,8 @@ class Comments(models.Model):
         related_name="comments",
     )
     pub_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        """Meta for Comments model."""
+
+        ordering = ['pub_date']
