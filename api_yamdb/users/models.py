@@ -5,19 +5,18 @@ from django.db import models
 from .validators import yamdb_username_validator
 
 
-ADMIN = 'admin'
-MODERATOR = 'moderator'
-USER = 'user'
-
-ROLE_CHOICES = (
-    (ADMIN, 'Администратор'),
-    (MODERATOR, 'Модератор'),
-    (USER, 'Пользователь'),
-)
-
-
 class User(AbstractUser):
     """Модель пользователя."""
+
+    ADMIN = 'admin'
+    MODERATOR = 'moderator'
+    USER = 'user'
+
+    ROLE_CHOICES = (
+        (ADMIN, 'Администратор'),
+        (MODERATOR, 'Модератор'),
+        (USER, 'Пользователь'),
+    )
 
     username = models.CharField(
         validators=(yamdb_username_validator,),
@@ -48,20 +47,21 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=50,
         choices=ROLE_CHOICES,
-        default='user'
+        default=USER,
+        verbose_name='Права',
     )
 
     @property
     def is_admin(self):
-        return self.role == ADMIN
+        return self.role == self.ADMIN
 
     @property
     def is_moderator(self):
-        return self.role == MODERATOR
+        return self.role == self.MODERATOR
 
     @property
     def is_user(self):
-        return self.role == USER
+        return self.role == self.USER
 
     class Meta:
         ordering = ('id',)

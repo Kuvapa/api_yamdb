@@ -6,10 +6,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-
 from reviews.models import Categories, Genres, Titles, Review
 from .serializers import (
     CategorySerializer,
@@ -42,11 +40,12 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(
         methods=['get', 'patch'],
         detail=False,
-        permission_classes=(IsAuthenticated, )
+        permission_classes=[permissions.IsAuthenticated],
+        serializer_class=UserReadOnlySerializer,
     )
     def me(self, request):
         if request.method == 'GET':
-            serializer = UserReadOnlySerializer(request.user)
+            serializer = UserSerializer(request.user)
             return Response(serializer.data)
         if request.method == 'PATCH':
             serializer = UserReadOnlySerializer(

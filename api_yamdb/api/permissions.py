@@ -26,13 +26,8 @@ class AdminModeratorAuthorPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return (
             request.user.is_superuser
-<<<<<<< HEAD
-            or request.is_admin
-            or request.is_moderator
-=======
             or request.user.is_admin
             or request.user.is_moderator
->>>>>>> 0b3af964d576f59690dc60acfaf5fc162315aad3
             or obj.author == request.user
         )
 
