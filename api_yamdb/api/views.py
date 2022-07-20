@@ -36,16 +36,16 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = (AdminOnlyPermission,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username', )
+    lookup_field = 'username'
 
     @action(
         methods=['get', 'patch'],
         detail=False,
         permission_classes=[permissions.IsAuthenticated],
-        serializer_class=UserReadOnlySerializer,
     )
     def me(self, request):
         if request.method == 'GET':
-            serializer = UserSerializer(request.user)
+            serializer = UserReadOnlySerializer(request.user)
             return Response(serializer.data)
         if request.method == 'PATCH':
             serializer = UserReadOnlySerializer(

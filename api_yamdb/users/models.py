@@ -59,10 +59,6 @@ class User(AbstractUser):
     def is_moderator(self):
         return self.role == self.MODERATOR
 
-    @property
-    def is_user(self):
-        return self.role == self.USER
-
     class Meta:
         ordering = ('id',)
 
