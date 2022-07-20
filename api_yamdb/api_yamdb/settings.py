@@ -1,3 +1,4 @@
+"""Settings for api_yamdb."""
 import os
 from datetime import timedelta
 

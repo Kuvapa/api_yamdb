@@ -1,9 +1,12 @@
+"""Filters for API."""
 from django_filters import rest_framework as filters
 
-from reviews.models import Titles
+from reviews.models import Title
 
 
 class TitlesFilter(filters .FilterSet):
+    """Titles filter."""
+
     name = filters.CharFilter(
         field_name='name',
         lookup_expr='icontains'
@@ -18,5 +21,7 @@ class TitlesFilter(filters .FilterSet):
     )
 
     class Meta:
-        model = Titles
+        """Meta for Titles filter."""
+
+        model = Title
         fields = ('name', 'year', 'genre', 'category')
