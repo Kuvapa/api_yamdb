@@ -22,6 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
         validators=[
             UniqueValidator(queryset=User.objects.all())
         ],
+        required=True,
     )
     email = serializers.CharField(
         validators=[

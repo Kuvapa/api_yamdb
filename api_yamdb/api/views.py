@@ -40,12 +40,14 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ('username', )
 
     @action(
-        methods=['GET', 'PATCH'],
+        methods=['get', 'patch'],
         detail=False,
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(IsAuthenticated, )
     )
     def me(self, request):
-        """Получение/изменение своих данных."""
+        if request.method == 'GET':
+            serializer = UserReadOnlySerializer(request.user)
+            return Response(serializer.data)
         if request.method == 'PATCH':
             serializer = UserReadOnlySerializer(
                 request.user,
@@ -54,13 +56,6 @@ class UserViewSet(viewsets.ModelViewSet):
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(serializer.data)
-        if request.method == 'GET':
-            serializer = UserSerializer(
-                request.user,
-                data=request.data,
-                partial=True
-            )
             return Response(serializer.data)
 
 
