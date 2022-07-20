@@ -6,11 +6,12 @@ from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework_simplejwt.tokens import AccessToken
-from reviews.models import Categories, Genres, Titles, Review
+from reviews.models import Categories, Genres, Title, Review
 from .filters import TitlesFilter
 from .serializers import (
     CategorySerializer,
@@ -129,7 +130,7 @@ class GenreViewSet(mixins.CreateModelMixin,
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all()
+    queryset = Title.objects.all()
     permission_classes = (AdminOrReadOnlyPermission, )
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
     filterset_class = TitlesFilter
@@ -144,13 +145,14 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Viewset for review."""
 
-    permission_classes = (AdminOrReadOnlyPermission,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = ReviewSerializer
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
 
     def get_title(self):
         """Get title object."""
         title_id = self.kwargs.get("title_id")
-        return get_object_or_404(Titles, id=title_id)
+        return get_object_or_404(Title, id=title_id)
 
     def get_queryset(self):
         """Queryset definition."""

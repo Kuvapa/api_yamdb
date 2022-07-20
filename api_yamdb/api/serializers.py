@@ -1,6 +1,9 @@
 from django.db.models import Avg
+from django.forms import ValidationError
+from django.core.exceptions import PermissionDenied
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from rest_framework.permissions import SAFE_METHODS
 
 from .validators import UniqueValueValidator
 
@@ -8,7 +11,7 @@ from users.models import User
 from reviews.models import (
     Categories,
     Genres,
-    Titles,
+    Title,
     Comments,
     Review
 )
@@ -80,15 +83,15 @@ class TitleSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = Titles
+        model = Title
         fields = '__all__'
 
     def create(self, validated_data):
         if 'genre' not in self.initial_data:
-            title = Titles.objects.create(**validated_data)
+            title = Title.objects.create(**validated_data)
             return title
         genre = validated_data.pop('genre')
-        title = Titles.objects.create(**validated_data)
+        title = Title.objects.create(**validated_data)
         title.genre.set(genre)
         return title
 
@@ -98,7 +101,7 @@ class TitlesReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     rating = serializers.SerializerMethodField()
     class Meta:
-        model = Titles
+        model = Title
         fields = '__all__'
 
     def get_rating(self, obj):
@@ -108,7 +111,7 @@ class TitlesReadSerializer(serializers.ModelSerializer):
         return rating
 
     def create(self, validated_data):
-        title = Titles.objects.create(**validated_data)
+        title = Title.objects.create(**validated_data)
         if 'genre' in self.initial_data:
             genres = self.initial_data.getlist('genre')
             for genre in genres:
@@ -124,6 +127,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username',
+        default=serializers.CurrentUserDefault(),
     )
 
     class Meta:
@@ -132,9 +136,22 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = '__all__'
         read_only_fields = ('title',)
-        validators = [
-            UniqueValueValidator('title')
-        ]
+
+    def validate(self, attrs):
+        # import pdb; pdb.set_trace()
+        if self.context['request'].method in SAFE_METHODS:
+            return attrs
+        if self.context['request'].method == 'PATCH':
+            # import pdb; pdb.set_trace()
+            if self.instance.author!=self.context['request'].user:
+                raise PermissionDenied()
+            return attrs
+        if Review.objects.filter(
+            author=self.context['request'].user,
+            title=self.context['view'].kwargs.get('title_id')
+        ).exists():
+            raise ValidationError("You can't make another review!")
+        return attrs
 
 
 class CommentSerializer(serializers.ModelSerializer):
