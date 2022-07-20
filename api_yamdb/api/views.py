@@ -141,7 +141,6 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleSerializer
 
 
-
 class ReviewViewSet(viewsets.ModelViewSet):
     """Viewset for review."""
 
