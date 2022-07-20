@@ -1,9 +1,13 @@
+"""Models for Reviews app."""
 from django.db import models
+from django.db.models import UniqueConstraint
 
 from users.models import User
 
 
 class Categories(models.Model):
+    """Categories for reviews."""
+
     name = models.CharField(
         max_length=100,
         verbose_name='Название категории',
@@ -16,13 +20,18 @@ class Categories(models.Model):
     )
 
     class Meta:
+        """Meta for Categories."""
+
         ordering = ['name']
 
     def __str__(self):
+        """__str__ for Categories."""
         return self.name
 
 
 class Genres(models.Model):
+    """Genres for reviews app."""
+
     name = models.CharField(
         max_length=100,
         verbose_name='Название Жанра',
@@ -35,13 +44,18 @@ class Genres(models.Model):
     )
 
     class Meta:
+        """Meta for Genres."""
+
         ordering = ['name']
 
     def __str__(self):
+        """__str__ for Genres."""
         return self.name
 
 
 class Title(models.Model):
+    """Titles for reviews app."""
+
     name = models.CharField(
         max_length=255,
         verbose_name='Название произведения',
@@ -70,13 +84,18 @@ class Title(models.Model):
     )
 
     class Meta:
+        """Meta for Title."""
+
         ordering = ['name']
 
     def __str__(self):
+        """__str__ for Title."""
         return self.name
 
 
 class GenresTitles(models.Model):
+    """GenresTitles for reviews."""
+
     genre = models.ForeignKey(
         Genres,
         on_delete=models.CASCADE,
@@ -89,10 +108,13 @@ class GenresTitles(models.Model):
     )
 
     def __str__(self):
+        """__str__ for GenresTitles."""
         return f'{self.genre}, {self.title}'
 
 
 class Review(models.Model):
+    """Review for reviews app."""
+
     title = models.ForeignKey(
         Title,
         verbose_name=("Произведения"),
@@ -117,8 +139,18 @@ class Review(models.Model):
     )
     pub_date = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        """Meta for Review model."""
+
+        constraints = [
+            UniqueConstraint(fields=["author", "title"],
+                             name="unique_relationships"),
+        ]
+
 
 class Comments(models.Model):
+    """Comments for reviews app."""
+
     review = models.ForeignKey(
         Review,
         verbose_name=("Отзыв"),

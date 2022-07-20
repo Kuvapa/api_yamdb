@@ -1,3 +1,4 @@
+"""Models for Users app."""
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import validate_email
 from django.db import models
@@ -53,14 +54,19 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
+        """Is_admin definition."""
         return self.role == self.ADMIN
 
     @property
     def is_moderator(self):
+        """Is_moderator definition."""
         return self.role == self.MODERATOR
 
     class Meta:
+        """Meta for User."""
+
         ordering = ('id',)
 
     def __str__(self):
+        """__str__ for User."""
         return self.username

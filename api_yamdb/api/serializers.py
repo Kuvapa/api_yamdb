@@ -1,11 +1,9 @@
+"""Serializers for API."""
 from django.db.models import Avg
 from django.forms import ValidationError
 from django.core.exceptions import PermissionDenied
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from rest_framework.permissions import SAFE_METHODS
-
-from .validators import UniqueValueValidator
 
 from users.models import User
 from reviews.models import (
@@ -34,6 +32,8 @@ class UserSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
+        """Meta for UserSerializer."""
+
         model = User
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role'
@@ -44,6 +44,8 @@ class UserReadOnlySerializer(serializers.ModelSerializer):
     """Сериализатор пользователя (чтение)."""
 
     class Meta:
+        """Meta for UserReadOnlySerializer."""
+
         model = User
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role'
@@ -52,29 +54,41 @@ class UserReadOnlySerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    """CategorySerializer for API."""
+
     class Meta:
+        """Meta for CategorySerializer."""
+
         model = Categories
         fields = ('name', 'slug')
 
 
 class GenreSerializer(serializers.ModelSerializer):
+    """GenreSerializer for API."""
+
     class Meta:
+        """Meta for GenreSerializer."""
+
         model = Genres
         fields = ('name', 'slug')
 
 
-
-
 class SlugObjectRelatedName(serializers.SlugRelatedField):
+    """SlugObjectRelatedName for API."""
+
     def __init__(self, read_serializer_cls, **kwargs):
+        """__init__  for SlugObjectRelatedName."""
         super().__init__(**kwargs)
         self.read_serializer_cls = read_serializer_cls
 
     def to_representation(self, obj):
+        """To_representation method for SlugObjectRelatedName."""
         return self.read_serializer_cls(obj).data
 
 
 class TitleSerializer(serializers.ModelSerializer):
+    """TitleSerializer for API."""
+
     genre = serializers.SlugRelatedField(
         slug_field='slug', many=True, queryset=Genres.objects.all()
     )
@@ -83,10 +97,13 @@ class TitleSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
+        """Meta for TitleSerializer."""
+
         model = Title
         fields = '__all__'
 
     def create(self, validated_data):
+        """Create method for TitleSerializer."""
         if 'genre' not in self.initial_data:
             title = Title.objects.create(**validated_data)
             return title
@@ -97,20 +114,27 @@ class TitleSerializer(serializers.ModelSerializer):
 
 
 class TitlesReadSerializer(serializers.ModelSerializer):
+    """TitlesReadSerializer for API."""
+
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
     rating = serializers.SerializerMethodField()
+
     class Meta:
+        """Meta for TitlesReadSerializer."""
+
         model = Title
         fields = '__all__'
 
     def get_rating(self, obj):
+        """Get_rating method for TitlesReadSerializer."""
         rating = obj.reviews.aggregate(Avg('score'))['score__avg']
         if isinstance(rating, int):
             return round(rating)
         return rating
 
     def create(self, validated_data):
+        """Create method for TitlesReadSerializer."""
         title = Title.objects.create(**validated_data)
         if 'genre' in self.initial_data:
             genres = self.initial_data.getlist('genre')
@@ -118,7 +142,6 @@ class TitlesReadSerializer(serializers.ModelSerializer):
                 current_genre, _ = Genres.objects.get_or_create(slug=genre)
                 title.genre.add(current_genre)
         return title
-
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -136,17 +159,15 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = '__all__'
         read_only_fields = ('title',)
+        ordering = ['id']
 
     def validate(self, attrs):
-        # import pdb; pdb.set_trace()
-        if self.context['request'].method in SAFE_METHODS:
-            return attrs
+        """Validate method for ReviewSerializer."""
         if self.context['request'].method == 'PATCH':
-            # import pdb; pdb.set_trace()
-            if self.instance.author!=self.context['request'].user:
+            if self.instance.author != self.context['request'].user:
                 raise PermissionDenied()
             return attrs
-        if Review.objects.filter(
+        elif Review.objects.filter(
             author=self.context['request'].user,
             title=self.context['view'].kwargs.get('title_id')
         ).exists():
@@ -155,31 +176,34 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    """Serializer for commentss."""
+    """CommentSerializer for API."""
 
     author = serializers.SlugRelatedField(
         read_only=True,
-        slug_field='username',
+        slug_field='username'
     )
 
     class Meta:
         """Meta for CommentSerializer."""
 
+        exclude = ('review',)
         model = Comments
-        fields = '__all__'
         read_only_fields = ('review',)
-        validators = [
-            UniqueValueValidator('review')
-        ]
+        ordering = ['id']
 
 
 class SignUpSerializer(serializers.ModelSerializer):
+    """SignUpSerializer for API."""
 
     class Meta:
+        """Meta for SignUpSerializer."""
+
         model = User
         fields = ('email', 'username')
 
 
 class ConfirmationCodeSerializer(serializers.Serializer):
+    """ConfirmationCodeSerializer for API."""
+
     username = serializers.CharField(required=True)
     confirmation_code = serializers.CharField(required=True)
