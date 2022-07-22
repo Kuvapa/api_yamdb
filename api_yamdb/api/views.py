@@ -3,6 +3,7 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
@@ -108,10 +109,16 @@ def get_token(request):
             status=status.HTTP_404_NOT_FOUND)
 
 
-class CategoryViewSet(mixins.CreateModelMixin,
-                      mixins.ListModelMixin,
-                      mixins.DestroyModelMixin,
-                      viewsets.GenericViewSet):
+class CreateListDestroyViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
+    pass
+
+
+class CategoryViewSet(CreateListDestroyViewSet):
     """CategoryViewSet for API."""
 
     queryset = Categories.objects.all()
@@ -123,10 +130,7 @@ class CategoryViewSet(mixins.CreateModelMixin,
     lookup_field = 'slug'
 
 
-class GenreViewSet(mixins.CreateModelMixin,
-                   mixins.ListModelMixin,
-                   mixins.DestroyModelMixin,
-                   viewsets.GenericViewSet):
+class GenreViewSet(CreateListDestroyViewSet):
     """GenreViewSet for API."""
 
     queryset = Genres.objects.all()
@@ -141,7 +145,7 @@ class GenreViewSet(mixins.CreateModelMixin,
 class TitleViewSet(viewsets.ModelViewSet):
     """TitleViewSet for API."""
 
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(rating=Avg('reviews__score'))
     permission_classes = (AdminOrReadOnlyPermission, )
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
     filterset_class = TitlesFilter

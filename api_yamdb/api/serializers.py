@@ -1,5 +1,4 @@
 """Serializers for API."""
-from django.db.models import Avg
 from django.forms import ValidationError
 from django.core.exceptions import PermissionDenied
 from rest_framework import serializers
@@ -102,46 +101,18 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
         fields = '__all__'
 
-    def create(self, validated_data):
-        """Create method for TitleSerializer."""
-        if 'genre' not in self.initial_data:
-            title = Title.objects.create(**validated_data)
-            return title
-        genre = validated_data.pop('genre')
-        title = Title.objects.create(**validated_data)
-        title.genre.set(genre)
-        return title
-
 
 class TitlesReadSerializer(serializers.ModelSerializer):
     """TitlesReadSerializer for API."""
 
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
-    rating = serializers.SerializerMethodField()
 
     class Meta:
         """Meta for TitlesReadSerializer."""
 
         model = Title
         fields = '__all__'
-
-    def get_rating(self, obj):
-        """Get_rating method for TitlesReadSerializer."""
-        rating = obj.reviews.aggregate(Avg('score'))['score__avg']
-        if isinstance(rating, int):
-            return round(rating)
-        return rating
-
-    def create(self, validated_data):
-        """Create method for TitlesReadSerializer."""
-        title = Title.objects.create(**validated_data)
-        if 'genre' in self.initial_data:
-            genres = self.initial_data.getlist('genre')
-            for genre in genres:
-                current_genre, _ = Genres.objects.get_or_create(slug=genre)
-                title.genre.add(current_genre)
-        return title
 
 
 class ReviewSerializer(serializers.ModelSerializer):

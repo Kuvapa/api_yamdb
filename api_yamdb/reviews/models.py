@@ -22,7 +22,7 @@ class Categories(models.Model):
     class Meta:
         """Meta for Categories."""
 
-        ordering = ['name']
+        ordering = ('name', )
 
     def __str__(self):
         """__str__ for Categories."""
@@ -46,7 +46,7 @@ class Genres(models.Model):
     class Meta:
         """Meta for Genres."""
 
-        ordering = ['name']
+        ordering = ('name', )
 
     def __str__(self):
         """__str__ for Genres."""
@@ -69,7 +69,7 @@ class Title(models.Model):
         'Описание произведения',
         help_text='Введите описание'
     )
-    genre = models.ManyToManyField(Genres, through='GenresTitles')
+    genre = models.ManyToManyField(Genres)
     category = models.ForeignKey(
         Categories,
         on_delete=models.SET_NULL,
@@ -77,39 +77,15 @@ class Title(models.Model):
         null=True,
         related_name='titles'
     )
-    rating = models.IntegerField(
-        verbose_name='Рейтинг',
-        null=True,
-        default=None
-    )
 
     class Meta:
         """Meta for Title."""
 
-        ordering = ['name']
+        ordering = ('name', )
 
     def __str__(self):
         """__str__ for Title."""
         return self.name
-
-
-class GenresTitles(models.Model):
-    """GenresTitles for reviews."""
-
-    genre = models.ForeignKey(
-        Genres,
-        on_delete=models.CASCADE,
-        related_name='gtitles'
-    )
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        related_name='gtitles'
-    )
-
-    def __str__(self):
-        """__str__ for GenresTitles."""
-        return f'{self.genre}, {self.title}'
 
 
 class Review(models.Model):
@@ -132,8 +108,7 @@ class Review(models.Model):
         related_name="reviews",
     )
     REVIEW_CHOICES = [(i, i) for i in range(1, 11)]
-    score = models.CharField(
-        max_length=2,
+    score = models.IntegerField(
         choices=REVIEW_CHOICES,
         default=None,
     )
