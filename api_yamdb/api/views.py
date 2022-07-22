@@ -23,7 +23,6 @@ from .serializers import (
     ReviewSerializer,
     CommentSerializer,
     UserSerializer,
-    UserReadOnlySerializer,
     SignUpSerializer,
     ConfirmationCodeSerializer
 )
@@ -54,19 +53,17 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def me(self, request):
-        """Me method ha-ha for UserViewSet."""
-        if request.method == 'GET':
-            serializer = UserReadOnlySerializer(request.user)
-            return Response(serializer.data)
-        if request.method == 'PATCH':
-            serializer = UserReadOnlySerializer(
-                request.user,
-                data=request.data,
-                partial=True
+        """Информация о пользователе."""
+
+        user = self.request.user
+        serializer = self.get_serializer(user)
+        if self.request.method == 'PATCH':
+            serializer = self.get_serializer(
+                user, data=request.data, partial=True
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data)
+            serializer.save(role=user.role)
+        return Response(serializer.data)
 
 
 @api_view(['POST'])
