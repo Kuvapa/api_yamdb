@@ -1,6 +1,8 @@
 """Models for Reviews app."""
 from django.db import models
 from django.db.models import UniqueConstraint
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 
 from users.models import User
 
@@ -22,7 +24,7 @@ class Categories(models.Model):
     class Meta:
         """Meta for Categories."""
 
-        ordering = ['name']
+        ordering = ('name', )
 
     def __str__(self):
         """__str__ for Categories."""
@@ -46,7 +48,7 @@ class Genres(models.Model):
     class Meta:
         """Meta for Genres."""
 
-        ordering = ['name']
+        ordering = ('name', )
 
     def __str__(self):
         """__str__ for Genres."""
@@ -69,7 +71,7 @@ class Title(models.Model):
         'Описание произведения',
         help_text='Введите описание'
     )
-    genre = models.ManyToManyField(Genres, through='GenresTitles')
+    genre = models.ManyToManyField(Genres)
     category = models.ForeignKey(
         Categories,
         on_delete=models.SET_NULL,
@@ -77,39 +79,15 @@ class Title(models.Model):
         null=True,
         related_name='titles'
     )
-    rating = models.IntegerField(
-        verbose_name='Рейтинг',
-        null=True,
-        default=None
-    )
 
     class Meta:
         """Meta for Title."""
 
-        ordering = ['name']
+        ordering = ('name', )
 
     def __str__(self):
         """__str__ for Title."""
         return self.name
-
-
-class GenresTitles(models.Model):
-    """GenresTitles for reviews."""
-
-    genre = models.ForeignKey(
-        Genres,
-        on_delete=models.CASCADE,
-        related_name='gtitles'
-    )
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        related_name='gtitles'
-    )
-
-    def __str__(self):
-        """__str__ for GenresTitles."""
-        return f'{self.genre}, {self.title}'
 
 
 class Review(models.Model):
@@ -131,11 +109,12 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         related_name="reviews",
     )
-    REVIEW_CHOICES = [(i, i) for i in range(1, 11)]
-    score = models.CharField(
-        max_length=2,
-        choices=REVIEW_CHOICES,
-        default=None,
+    score = models.PositiveSmallIntegerField(
+        default=10,
+        validators=[
+            MaxValueValidator(10),
+            MinValueValidator(1),
+        ]
     )
     pub_date = models.DateTimeField(auto_now_add=True)
 

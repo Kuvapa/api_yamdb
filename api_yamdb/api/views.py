@@ -1,8 +1,8 @@
 """Views for API."""
-import uuid
-
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
@@ -11,7 +11,6 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import SAFE_METHODS
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Categories, Genres, Title, Review
 from .filters import TitlesFilter
@@ -23,14 +22,13 @@ from .serializers import (
     ReviewSerializer,
     CommentSerializer,
     UserSerializer,
-    UserReadOnlySerializer,
     SignUpSerializer,
     ConfirmationCodeSerializer
 )
 from .permissions import (
     AdminOnlyPermission,
     AdminOrReadOnlyPermission,
-    AdminModeratorAuthorPermission
+    UserSafeOrUpdatePermission
 )
 
 
@@ -54,19 +52,17 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def me(self, request):
-        """Me method ha-ha for UserViewSet."""
-        if request.method == 'GET':
-            serializer = UserReadOnlySerializer(request.user)
-            return Response(serializer.data)
-        if request.method == 'PATCH':
-            serializer = UserReadOnlySerializer(
-                request.user,
-                data=request.data,
-                partial=True
+        """Информация о пользователе."""
+
+        user = self.request.user
+        serializer = self.get_serializer(user)
+        if self.request.method == 'PATCH':
+            serializer = self.get_serializer(
+                user, data=request.data, partial=True
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data)
+            serializer.save(role=user.role)
+        return Response(serializer.data)
 
 
 @api_view(['POST'])
@@ -76,7 +72,7 @@ def send_confirmation_code(request):
     serializer = SignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
-    confirmation_code = uuid.uuid3(uuid.NAMESPACE_DNS, user.email)
+    confirmation_code = default_token_generator.make_token(user)
     send_mail(
         'Код подтверждения YAMDB',
         f'Код подтверждения: {confirmation_code}',
@@ -93,11 +89,11 @@ def get_token(request):
     """Получение токена."""
     serializer = ConfirmationCodeSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    user = get_object_or_404(User, username=serializer.data['username'])
+    user = User.objects.filter(username=serializer.data['username'])
     confirmation_code = serializer.data['confirmation_code']
-    if User.objects.filter(username=user.username).exists():
-        if confirmation_code != str(
-            uuid.uuid3(uuid.NAMESPACE_DNS, user.email)
+    if user.exists():
+        if confirmation_code != default_token_generator.check_token(
+            user, confirmation_code
         ):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         token = AccessToken.for_user(user)
@@ -108,10 +104,18 @@ def get_token(request):
             status=status.HTTP_404_NOT_FOUND)
 
 
-class CategoryViewSet(mixins.CreateModelMixin,
-                      mixins.ListModelMixin,
-                      mixins.DestroyModelMixin,
-                      viewsets.GenericViewSet):
+class CreateListDestroyViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
+    """CreateListDestroyViewSet definition."""
+
+    pass
+
+
+class CategoryViewSet(CreateListDestroyViewSet):
     """CategoryViewSet for API."""
 
     queryset = Categories.objects.all()
@@ -123,10 +127,7 @@ class CategoryViewSet(mixins.CreateModelMixin,
     lookup_field = 'slug'
 
 
-class GenreViewSet(mixins.CreateModelMixin,
-                   mixins.ListModelMixin,
-                   mixins.DestroyModelMixin,
-                   viewsets.GenericViewSet):
+class GenreViewSet(CreateListDestroyViewSet):
     """GenreViewSet for API."""
 
     queryset = Genres.objects.all()
@@ -141,7 +142,7 @@ class GenreViewSet(mixins.CreateModelMixin,
 class TitleViewSet(viewsets.ModelViewSet):
     """TitleViewSet for API."""
 
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(rating=(Avg('reviews__score')))
     permission_classes = (AdminOrReadOnlyPermission, )
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
     filterset_class = TitlesFilter
@@ -157,7 +158,10 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Viewset for review."""
 
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+        UserSafeOrUpdatePermission,
+    )
     serializer_class = ReviewSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
 
@@ -174,28 +178,16 @@ class ReviewViewSet(viewsets.ModelViewSet):
         """Create redefinition."""
         serializer.save(author=self.request.user, title=self.get_title())
 
-    def get_permissions(self):
-        """Get_permission method for ReviewViewSet."""
-        if self.request.method == SAFE_METHODS:
-            return (IsAuthenticatedOrReadOnly)
-        elif self.request.method in ('PATCH', 'DELETE'):
-            return (AdminModeratorAuthorPermission(),)
-        return super(ReviewViewSet, self).get_permissions()
-
 
 class CommentViewSet(viewsets.ModelViewSet):
     """Viewset for comments."""
 
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+        UserSafeOrUpdatePermission
+    )
     serializer_class = CommentSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
-
-    def get_title(self):
-        """Get_title method for CommentViewSet."""
-        return get_object_or_404(
-            Title,
-            pk=self.kwargs.get('title_id')
-        )
 
     def get_review(self):
         """Get_review method for CommentViewSet."""
@@ -206,7 +198,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Get_queryset method for CommentViewSet."""
-        review = Review.objects.filter(title=self.get_title(),
+        review = Review.objects.filter(title=self.kwargs.get('title_id'),
                                        pk=self.kwargs.get('review_id')).get()
         return review.comments.all()
 
@@ -214,9 +206,3 @@ class CommentViewSet(viewsets.ModelViewSet):
         """Perform_create method for CommentViewSet."""
         serializer.save(author=self.request.user,
                         review=self.get_review())
-
-    def get_permissions(self):
-        """Get_permissions method for CommentViewSet."""
-        if self.request.method in ('PATCH', 'DELETE'):
-            return (AdminModeratorAuthorPermission(),)
-        return super(CommentViewSet, self).get_permissions()
