@@ -1,10 +1,9 @@
 """Serializers for API."""
+from django.contrib.auth import get_user_model
 from django.forms import ValidationError
 from django.core.exceptions import PermissionDenied
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 
-from users.models import User
 from reviews.models import (
     Categories,
     Genres,
@@ -14,21 +13,11 @@ from reviews.models import (
 )
 
 
+User = get_user_model()
+
+
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор пользователя."""
-
-    username = serializers.CharField(
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ],
-        required=True,
-    )
-    email = serializers.CharField(
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ],
-        required=True,
-    )
 
     class Meta:
         """Meta for UserSerializer."""
@@ -37,19 +26,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role'
         )
-
-
-class UserReadOnlySerializer(serializers.ModelSerializer):
-    """Сериализатор пользователя (чтение)."""
-
-    class Meta:
-        """Meta for UserReadOnlySerializer."""
-
-        model = User
-        fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
-        )
-        read_only_fields = ('role', )
 
 
 class CategorySerializer(serializers.ModelSerializer):
