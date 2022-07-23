@@ -72,19 +72,6 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
-class SlugObjectRelatedName(serializers.SlugRelatedField):
-    """SlugObjectRelatedName for API."""
-
-    def __init__(self, read_serializer_cls, **kwargs):
-        """__init__  for SlugObjectRelatedName."""
-        super().__init__(**kwargs)
-        self.read_serializer_cls = read_serializer_cls
-
-    def to_representation(self, obj):
-        """To_representation method for SlugObjectRelatedName."""
-        return self.read_serializer_cls(obj).data
-
-
 class TitleSerializer(serializers.ModelSerializer):
     """TitleSerializer for API."""
 
@@ -105,6 +92,7 @@ class TitleSerializer(serializers.ModelSerializer):
 class TitlesReadSerializer(serializers.ModelSerializer):
     """TitlesReadSerializer for API."""
 
+    rating = serializers.FloatField(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
 

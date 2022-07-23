@@ -48,3 +48,30 @@ class AdminOrReadOnlyPermission(permissions.BasePermission):
                 request.user.is_admin or request.user.is_superuser
             )
         )
+
+
+class UserSafeOrUpdatePermission(permissions.BasePermission):
+    """Разрешения для разного уровня досутпа.
+
+    Распределеине прав доступа и изменения объектов,
+    в зависимости от статуса токена.
+    """
+
+    def has_permission(self, request, view):
+        """Has_permissions for UserSafeOrUpdatePermission."""
+        return(
+            request.method in permissions.SAFE_METHODS
+            or request.user.is_authenticated
+            or request.method in ('PATCH', 'DELETE')
+        )
+
+    def has_object_permission(self, request, view, obj):
+        """Has_object_permissions for UserSafeOrUpdatePermission."""
+        if request.method in permissions.SAFE_METHODS:
+            return (permissions.IsAuthenticatedOrReadOnly)
+        return (
+            request.user.is_superuser
+            or request.user.is_admin
+            or request.user.is_moderator
+            or obj.author == request.user
+        )
