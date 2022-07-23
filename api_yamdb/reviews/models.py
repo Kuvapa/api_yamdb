@@ -1,6 +1,8 @@
 """Models for Reviews app."""
 from django.db import models
 from django.db.models import UniqueConstraint
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 
 from users.models import User
 
@@ -107,10 +109,12 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         related_name="reviews",
     )
-    REVIEW_CHOICES = [(i, i) for i in range(1, 11)]
-    score = models.IntegerField(
-        choices=REVIEW_CHOICES,
-        default=None,
+    score = models.PositiveSmallIntegerField(
+        default=10,
+        validators=[
+            MaxValueValidator(10),
+            MinValueValidator(1),
+        ]
     )
     pub_date = models.DateTimeField(auto_now_add=True)
 

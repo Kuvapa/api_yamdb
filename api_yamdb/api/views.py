@@ -11,7 +11,6 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import SAFE_METHODS
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Categories, Genres, Title, Review
 from .filters import TitlesFilter
@@ -29,7 +28,7 @@ from .serializers import (
 from .permissions import (
     AdminOnlyPermission,
     AdminOrReadOnlyPermission,
-    AdminModeratorAuthorPermission
+    UserSafeOrUpdatePermission
 )
 
 
@@ -111,6 +110,8 @@ class CreateListDestroyViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
+    """CreateListDestroyViewSet definition."""
+
     pass
 
 
@@ -141,7 +142,7 @@ class GenreViewSet(CreateListDestroyViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     """TitleViewSet for API."""
 
-    queryset = Title.objects.annotate(rating=Avg('reviews__score'))
+    queryset = Title.objects.all().annotate(rating=(Avg('reviews__score')))
     permission_classes = (AdminOrReadOnlyPermission, )
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
     filterset_class = TitlesFilter
@@ -157,7 +158,10 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Viewset for review."""
 
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+        UserSafeOrUpdatePermission,
+    )
     serializer_class = ReviewSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
 
@@ -174,28 +178,16 @@ class ReviewViewSet(viewsets.ModelViewSet):
         """Create redefinition."""
         serializer.save(author=self.request.user, title=self.get_title())
 
-    def get_permissions(self):
-        """Get_permission method for ReviewViewSet."""
-        if self.request.method == SAFE_METHODS:
-            return (IsAuthenticatedOrReadOnly)
-        elif self.request.method in ('PATCH', 'DELETE'):
-            return (AdminModeratorAuthorPermission(),)
-        return super(ReviewViewSet, self).get_permissions()
-
 
 class CommentViewSet(viewsets.ModelViewSet):
     """Viewset for comments."""
 
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+        UserSafeOrUpdatePermission
+    )
     serializer_class = CommentSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, )
-
-    def get_title(self):
-        """Get_title method for CommentViewSet."""
-        return get_object_or_404(
-            Title,
-            pk=self.kwargs.get('title_id')
-        )
 
     def get_review(self):
         """Get_review method for CommentViewSet."""
@@ -206,7 +198,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Get_queryset method for CommentViewSet."""
-        review = Review.objects.filter(title=self.get_title(),
+        review = Review.objects.filter(title=self.kwargs.get('title_id'),
                                        pk=self.kwargs.get('review_id')).get()
         return review.comments.all()
 
@@ -214,9 +206,3 @@ class CommentViewSet(viewsets.ModelViewSet):
         """Perform_create method for CommentViewSet."""
         serializer.save(author=self.request.user,
                         review=self.get_review())
-
-    def get_permissions(self):
-        """Get_permissions method for CommentViewSet."""
-        if self.request.method in ('PATCH', 'DELETE'):
-            return (AdminModeratorAuthorPermission(),)
-        return super(CommentViewSet, self).get_permissions()
