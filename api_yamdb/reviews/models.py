@@ -1,4 +1,6 @@
 """Models for api_yamdb."""
+from datetime import datetime
+from django.core.validators import MaxValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 
@@ -61,7 +63,10 @@ class Title(models.Model):
         verbose_name='Название произведения',
         help_text='Укажите название произведения'
     )
-    year = models.IntegerField(
+    year = models.PositiveSmallIntegerField(
+        validators=[
+            MaxValueValidator(datetime.now().year)
+        ],
         verbose_name='Год выпуска',
         help_text='Укажите год выпуска',
     )

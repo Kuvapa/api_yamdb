@@ -4,7 +4,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -14,6 +14,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Categories, Genres, Title, Review
 from .filters import TitlesFilter
+from .mixins import CreateListDestroyViewSet
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -98,17 +99,6 @@ def get_token(request):
         token = AccessToken.for_user(user)
         return Response({f'token: {token}'}, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
-
-
-class CreateListDestroyViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
-    """CreateListDestroyViewSet definition."""
-
-    pass
 
 
 class CategoryViewSet(CreateListDestroyViewSet):
