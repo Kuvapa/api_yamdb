@@ -1,8 +1,6 @@
-"""Models for Reviews app."""
+"""Models for api_yamdb."""
 from django.db import models
 from django.db.models import UniqueConstraint
-from django.core.validators import MaxValueValidator, MinValueValidator
-
 
 from users.models import User
 
@@ -95,36 +93,34 @@ class Review(models.Model):
 
     title = models.ForeignKey(
         Title,
-        verbose_name=("Произведения"),
+        verbose_name=('Произведения'),
         on_delete=models.CASCADE,
-        related_name="reviews",
+        related_name='reviews',
     )
     text = models.TextField(
-        verbose_name="Текст отзыва",
-        help_text="Напишите здесь текст нового отзыва"
+        verbose_name='Текст отзыва',
+        help_text='Напишите здесь текст нового отзыва'
     )
     author = models.ForeignKey(
         User,
-        verbose_name=("Автор отзыва"),
+        verbose_name=('Автор отзыва'),
         on_delete=models.CASCADE,
-        related_name="reviews",
+        related_name='reviews',
     )
-    score = models.PositiveSmallIntegerField(
-        default=10,
-        validators=[
-            MaxValueValidator(10),
-            MinValueValidator(1),
-        ]
+    REVIEW_CHOICES = [(i, i) for i in range(1, 11)]
+    score = models.IntegerField(
+        choices=REVIEW_CHOICES,
+        default=None,
     )
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         """Meta for Review model."""
 
-        ordering = ['pub_date']
+        ordering = ('pub_date',)
         constraints = [
-            UniqueConstraint(fields=["author", "title"],
-                             name="unique_relationships"),
+            UniqueConstraint(fields=['author', 'title'],
+                             name='unique_relationships'),
         ]
 
 
@@ -133,21 +129,21 @@ class Comments(models.Model):
 
     review = models.ForeignKey(
         Review,
-        verbose_name=("Отзыв"),
+        verbose_name=('Отзыв'),
         on_delete=models.CASCADE,
-        related_name="comments")
+        related_name='comments')
     text = models.TextField(
-        verbose_name="Текст комментария",
-        help_text="Напишите здесь текст нового комментария")
+        verbose_name='Текст комментария',
+        help_text='Напишите здесь текст нового комментария')
     author = models.ForeignKey(
         User,
-        verbose_name=("Автор комментария"),
+        verbose_name=('Автор комментария'),
         on_delete=models.CASCADE,
-        related_name="comments",
+        related_name='comments',
     )
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         """Meta for Comments model."""
 
-        ordering = ['pub_date']
+        ordering = ('pub_date',)

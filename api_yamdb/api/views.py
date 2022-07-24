@@ -53,7 +53,6 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def me(self, request):
         """Информация о пользователе."""
-
         user = self.request.user
         serializer = self.get_serializer(user)
         if self.request.method == 'PATCH':
