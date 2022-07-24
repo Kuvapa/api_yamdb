@@ -63,6 +63,7 @@ class User(AbstractUser):
 
     class Meta:
         """Meta for User."""
+
         ordering = ('id',)
 
     def __str__(self):

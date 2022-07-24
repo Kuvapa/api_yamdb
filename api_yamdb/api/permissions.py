@@ -12,6 +12,7 @@ class AdminOnlyPermission(permissions.BasePermission):
 
 class AdminModeratorAuthorPermission(permissions.BasePermission):
     """Права на изменение объекта.
+
     (суперюзер, администратор, модератор, автор).
     """
 
@@ -60,7 +61,7 @@ class UserSafeOrUpdatePermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         """Has_object_permissions for UserSafeOrUpdatePermission."""
         if request.method in permissions.SAFE_METHODS:
-            return (permissions.IsAuthenticatedOrReadOnly)
+            return True
         return (
             request.user.is_superuser
             or request.user.is_admin
