@@ -4,7 +4,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -14,6 +14,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Categories, Genres, Title, Review
 from .filters import TitlesFilter
+from .mixins import CreateListDestroyViewSet
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -53,7 +54,6 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def me(self, request):
         """Информация о пользователе."""
-
         user = self.request.user
         serializer = self.get_serializer(user)
         if self.request.method == 'PATCH':
@@ -89,30 +89,16 @@ def get_token(request):
     """Получение токена."""
     serializer = ConfirmationCodeSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    user = User.objects.filter(username=serializer.data['username'])
+    user = get_object_or_404(
+        User, username=serializer.validated_data["username"]
+    )
     confirmation_code = serializer.data['confirmation_code']
-    if user.exists():
-        if confirmation_code != default_token_generator.check_token(
-            user, confirmation_code
-        ):
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+    if confirmation_code == default_token_generator.check_token(
+        user, confirmation_code
+    ):
         token = AccessToken.for_user(user)
         return Response({f'token: {token}'}, status=status.HTTP_200_OK)
-    else:
-        return Response(
-            {'username': 'Несуществующий пользователь.'},
-            status=status.HTTP_404_NOT_FOUND)
-
-
-class CreateListDestroyViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
-    """CreateListDestroyViewSet definition."""
-
-    pass
+    return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class CategoryViewSet(CreateListDestroyViewSet):

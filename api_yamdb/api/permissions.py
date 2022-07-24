@@ -39,9 +39,7 @@ class AdminOrReadOnlyPermission(permissions.BasePermission):
         """Has_permission method for AdminModeratorAuthorPermission."""
         return (
             request.method in permissions.SAFE_METHODS
-            or request.user.is_authenticated and (
-                request.user.is_admin or request.user.is_superuser
-            )
+            or request.user.is_authenticated and request.user.is_admin
         )
 
 
@@ -63,7 +61,7 @@ class UserSafeOrUpdatePermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         """Has_object_permissions for UserSafeOrUpdatePermission."""
         if request.method in permissions.SAFE_METHODS:
-            return (permissions.IsAuthenticatedOrReadOnly)
+            return True
         return (
             request.user.is_superuser
             or request.user.is_admin
