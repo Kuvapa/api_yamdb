@@ -89,19 +89,16 @@ def get_token(request):
     """Получение токена."""
     serializer = ConfirmationCodeSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    user = User.objects.filter(username=serializer.data['username'])
+    user = get_object_or_404(
+        User, username=serializer.validated_data["username"]
+    )
     confirmation_code = serializer.data['confirmation_code']
-    if user.exists():
-        if confirmation_code != default_token_generator.check_token(
-            user, confirmation_code
-        ):
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+    if confirmation_code == default_token_generator.check_token(
+        user, confirmation_code
+    ):
         token = AccessToken.for_user(user)
         return Response({f'token: {token}'}, status=status.HTTP_200_OK)
-    else:
-        return Response(
-            {'username': 'Несуществующий пользователь.'},
-            status=status.HTTP_404_NOT_FOUND)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreateListDestroyViewSet(
