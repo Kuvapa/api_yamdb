@@ -12,7 +12,6 @@ class AdminOnlyPermission(permissions.BasePermission):
 
 class AdminModeratorAuthorPermission(permissions.BasePermission):
     """Права на изменение объекта.
-
     (суперюзер, администратор, модератор, автор).
     """
 
@@ -39,9 +38,7 @@ class AdminOrReadOnlyPermission(permissions.BasePermission):
         """Has_permission method for AdminModeratorAuthorPermission."""
         return (
             request.method in permissions.SAFE_METHODS
-            or request.user.is_authenticated and (
-                request.user.is_admin or request.user.is_superuser
-            )
+            or request.user.is_authenticated and request.user.is_admin
         )
 
 
