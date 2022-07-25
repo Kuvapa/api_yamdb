@@ -1,3 +1,4 @@
+"""Mixins for api_yamdb."""
 from rest_framework import mixins, viewsets
 
 

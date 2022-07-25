@@ -1,10 +1,13 @@
 """Models for api_yamdb."""
-from datetime import datetime
-from django.core.validators import MaxValueValidator
+from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 
-from users.models import User
+from datetime import datetime
+
+
+User = get_user_model()
 
 
 class Categories(models.Model):
@@ -112,10 +115,12 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         related_name='reviews',
     )
-    REVIEW_CHOICES = [(i, i) for i in range(1, 11)]
-    score = models.IntegerField(
-        choices=REVIEW_CHOICES,
+    score = models.PositiveSmallIntegerField(
         default=None,
+        validators=[
+            MaxValueValidator(10),
+            MinValueValidator(1)
+        ],
     )
     pub_date = models.DateTimeField(auto_now_add=True)
 
