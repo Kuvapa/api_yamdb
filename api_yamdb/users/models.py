@@ -21,7 +21,7 @@ class User(AbstractUser):
         validators=(
             RegexValidator(regex=r'^[\w.@+-]+$',),
             RegexValidator(
-                regex=r'^\b(m|M)e\b',
+                regex=r'^\b(m|M)(e|E)\b',
                 inverse_match=True,
                 message="""Данное имя пользователя использовать нельзя."""
             ),
