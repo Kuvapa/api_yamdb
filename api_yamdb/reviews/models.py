@@ -6,7 +6,6 @@ from django.db.models import UniqueConstraint
 
 from datetime import datetime
 
-
 User = get_user_model()
 
 
